@@ -28,6 +28,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { useQuery } from '@tanstack/react-query';
+import { User } from 'lucide-react';
 
 interface ActivityItem {
   id: string;
@@ -86,7 +87,7 @@ const fetchStatsData = async (): Promise<StatsData> => {
 
 // Function to fetch recent activity
 const fetchRecentActivity = async (): Promise<ActivityItem[]> => {
-  // Get recent uploads with user info
+  // Get recent uploads with user info - using real-time data
   const { data, error } = await supabase
     .from('uploads')
     .select(`
@@ -94,7 +95,7 @@ const fetchRecentActivity = async (): Promise<ActivityItem[]> => {
       name,
       date,
       model_generated,
-      profiles!uploads_user_id_fkey (email)
+      profiles!uploads_user_id_fkey (email, id)
     `)
     .order('date', { ascending: false })
     .limit(5);
@@ -102,6 +103,7 @@ const fetchRecentActivity = async (): Promise<ActivityItem[]> => {
   if (error) throw new Error(error.message);
   
   // Transform the data to match the ActivityItem interface
+  // Ensuring we display real-time user email data
   return (data || []).map(item => ({
     id: item.id,
     user: item.profiles?.email || 'unknown user',
@@ -174,11 +176,45 @@ const Stats: React.FC = () => {
     queryFn: fetchChartData,
   });
   
-  // Fetch recent activity
-  const { data: recentActivity = [], isLoading: isActivityLoading, error: activityError } = useQuery({
+  // Fetch recent activity with real-time updates
+  const { data: recentActivity = [], isLoading: isActivityLoading, error: activityError, refetch: refetchActivity } = useQuery({
     queryKey: ['recent-activity'],
     queryFn: fetchRecentActivity,
+    refetchInterval: 10000, // Refetch every 10 seconds to ensure real-time data
   });
+  
+  // Set up real-time subscription for user data and upload changes
+  useEffect(() => {
+    // Create a channel for both profiles and uploads tables
+    const channel = supabase.channel('db-changes');
+    
+    // Subscribe to changes in the profiles table
+    channel.on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'profiles'
+    }, () => {
+      // Refetch activity data when profiles change
+      refetchActivity();
+    });
+    
+    // Subscribe to changes in the uploads table
+    channel.on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'uploads'
+    }, () => {
+      // Refetch activity data when uploads change
+      refetchActivity();
+    });
+    
+    // Start the subscription
+    channel.subscribe();
+      
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [refetchActivity]);
   
   // Show toast for errors
   useEffect(() => {
@@ -326,7 +362,12 @@ const Stats: React.FC = () => {
                     ) : (
                       recentActivity.map((activity) => (
                         <TableRow key={activity.id}>
-                          <TableCell className="font-medium">{activity.user}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center space-x-2">
+                              <User size={16} className="text-app-blue" />
+                              <span className="text-app-dark">{activity.user}</span>
+                            </div>
+                          </TableCell>
                           <TableCell>{activity.action}</TableCell>
                           <TableCell>{activity.date}</TableCell>
                           <TableCell>
