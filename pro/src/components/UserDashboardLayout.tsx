@@ -4,8 +4,6 @@ import Navbar from './Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from '@/components/ui/use-toast';
-import { useNetwork } from './NetworkStatus';
 
 interface UserDashboardLayoutProps {
   children: React.ReactNode;
@@ -29,23 +27,11 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({ children }) =
     });
   }, [currentTab, location.pathname, isAuthenticated]);
 
-  const { isOnline } = useNetwork();
-
   const handleTabChange = (value: string) => {
-    // Check for network connectivity before navigation
-    if (!isOnline) {
-      toast({
-        title: "Network Error",
-        description: "You appear to be offline. Please check your internet connection.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Prevent unnecessary navigation if we're already on the correct route
-    const targetPath = value === 'recent' ? '/recent' : '/dashboard';
-    if (location.pathname !== targetPath) {
-      navigate(targetPath);
+    if (value === 'recent') {
+      navigate('/recent');
+    } else {
+      navigate('/dashboard');
     }
   };
 

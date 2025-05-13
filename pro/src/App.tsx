@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import NetworkProvider from "./components/NetworkStatus";
 
 // Pages
 import Index from "./pages/Index";
@@ -28,9 +27,8 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <NetworkProvider>
-            <AuthProvider>
-              <Routes>
+          <AuthProvider>
+            <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
@@ -63,9 +61,8 @@ const App = () => {
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AuthProvider>
-          </NetworkProvider>
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

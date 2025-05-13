@@ -1,4 +1,7 @@
 {
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
   "version": 2,
   "buildCommand": "cd pro && npm install && npm run build",
   "outputDirectory": "pro/dist",

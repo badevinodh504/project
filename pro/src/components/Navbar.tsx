@@ -3,7 +3,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import NetworkStatusIndicator from './NetworkStatusIndicator';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +28,6 @@ const Navbar: React.FC = () => {
         </Link>
         
         <div className="flex items-center space-x-4">
-          <NetworkStatusIndicator showOfflineOnly={true} />
           {isAuthenticated ? (
             <div className="flex items-center space-x-4">
               {user?.role === 'admin' ? (
